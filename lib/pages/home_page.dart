@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:news_app/model/article_model.dart';
 import 'package:news_app/pages/watch_later_page.dart';
-import 'package:news_app/services/api_service.dart';
-import 'package:news_app/services/db_service.dart';
+import 'package:news_app/services/provider.dart';
+import 'package:provider/provider.dart';
 import '../components/article_widget.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,7 +20,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var future = ApiService().getArticle();
+    var provider = Provider.of<ApiProvider>(context);
+    var allArticle = provider.articles;
     return Scaffold(
       appBar: AppBar(
           title: const Text(
@@ -41,13 +42,9 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
           backgroundColor: Colors.white),
-      body: FutureBuilder(
-        future: future,
-        builder: (BuildContext context, snapshot) {
-          var allArticle = snapshot.data;
-          if (snapshot.hasData) {
-            return ListView.builder(
-              itemCount: allArticle!.length,
+      body: allArticle.isNotEmpty
+          ? ListView.builder(
+              itemCount: allArticle.length,
               itemBuilder: (context, index) {
                 var article = allArticle[index];
                 return ArticleWidget(
@@ -72,25 +69,27 @@ class _HomePageState extends State<HomePage> {
                         content: article.content,
                         sourceID: article.sourceID,
                       );
-                      DBService.instance.addNews(news);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Added successfully', style: TextStyle(color: Colors.green),),
-                        duration: Duration(milliseconds: 300),
-
-                      ));
+                      Provider.of<DBProvider>(context, listen: false)
+                          .addArticle(news);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Added successfully',
+                            style: TextStyle(color: Colors.green),
+                          ),
+                          duration: Duration(milliseconds: 300),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.watch_later_outlined),
                     label: const Text('Watch Later'),
                   ),
                 );
               },
-            );
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('No data found!'));
-          }
-          return const Center(child: CircularProgressIndicator());
-        },
-      ),
+            )
+          : const Center(
+              child: CircularProgressIndicator(),
+            ),
     );
   }
 }

@@ -15,7 +15,6 @@ class DBService {
 
     // If database don't exists, create one
     _database = await _initDB(dbName);
-
     return _database;
   }
 
@@ -45,33 +44,25 @@ class DBService {
   }
 
   // Insert News on database
-Future<void> addNews(Article news) async {
-  final db = await database;
-  List<Map<String, dynamic>> result = await db!.query(tableName,
-      where: 'url = ?', whereArgs: [news.url]);
-  if (result.isNotEmpty) {
-    // If news already exists, update the existing
-    await db.update(tableName, news.toMap(),
-        where: 'url = ?', whereArgs: [news.url]);
-  } else {
-    // If news doesn't exist, insert a new
-    await db.insert(tableName, news.toMap());
-  }
-}
-
-  // Delete all news
-  Future<bool> deleteAllNews() async {
+  Future<void> addNews(Article news) async {
     final db = await database;
-    await db!.delete(tableName);
-    return true;
+    List<Map<String, dynamic>> result =
+        await db!.query(tableName, where: 'url = ?', whereArgs: [news.url]);
+    if (result.isNotEmpty) {
+      // If news already exists, update the existing
+      await db.update(tableName, news.toMap(),
+          where: 'url = ?', whereArgs: [news.url]);
+    } else {
+      // If news doesn't exist, insert a new
+      await db.insert(tableName, news.toMap());
+    }
   }
 
-  Future<List<Article>> getAllNews() async {
+  // Get all Articles
+  Future<List<Article>> getAllArticle() async {
     final db = await database;
-    // final res = await db!.query(tableName);
     List<Map<String, dynamic>> maps = await db!.query(tableName);
     return List.generate(
-      // id: maps[index]['id'],
       maps.length,
       (i) => Article(
           sourceID: maps[i]['sourceID'],
@@ -86,14 +77,15 @@ Future<void> addNews(Article news) async {
     ).toList();
   }
 
-    Future<bool> deleteArticle(String url) async {
-      final db = await instance.database;
-      await db!.delete(
-        tableName,
-        where: 'url = ?',
-        whereArgs: [url],
-      );
-      return true;
+  // Delete Article by url
+  Future<bool> deleteArticle(String url) async {
+    final db = await instance.database;
+    await db!.delete(
+      tableName,
+      where: 'url = ?',
+      whereArgs: [url],
+    );
+    return true;
   }
 
   Future close() async {
